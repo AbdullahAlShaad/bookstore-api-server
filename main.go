@@ -2,18 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
+	"strings"
 )
 
 type BookDB map[string]Book
-type AuthorDB map[string]int
+type AuthorDB map[string]Author
 
 // Keeps record Books
 // key - ISBN, value -> Book Object
-
 var bookList BookDB
 
 // Records Number of books of author
@@ -21,15 +20,20 @@ var bookList BookDB
 var authorList AuthorDB
 
 
-type Author struct {
+type AuthorInfo struct {
 	Name string `json:"name"`
 	DateOfBirth string `json:"date_of_birth"`
 	BirthPlace string `json:"birth_place"`
 }
 
+type Author struct {
+	AuthorInfo `json:"author"`
+	Books []string `json:"books"` //List of books the author wrote
+}
+
 type Book struct {
 	BookName string `json:"book_name"`
-	Author `json:"author"`
+	AuthorInfo `json:"author_info"`
 	ISBN string `json:"isbn"`
 	Genre string `json:"genre"`
 	Publisher string `json:"publisher"`
@@ -38,20 +42,20 @@ type Book struct {
 func GenerateDummyData() {
 	book1 := Book{
 		BookName: "A Thousand Splendid Suns",
-		Author : Author{
+		AuthorInfo : AuthorInfo{
 			Name: "Khaled Hosseini",
 			DateOfBirth : "March 4, 1965",
 			BirthPlace: "Afganistan",
 		},
-		ISBN: "978-1-59448-950-1",
+		ISBN: "1",
 		Genre: "Fiction",
 		Publisher: "Riverhead Books",
 	}
-	bookList["978-1-59448-950-1"] = book1
+	bookList["1"] = book1
 
 	book2 := Book{
 		BookName: "The Alchemist",
-		Author : Author{
+		AuthorInfo : AuthorInfo{
 			Name: "Paulo Coelho",
 			DateOfBirth : "August 24, 1947",
 			BirthPlace: "Brazil",
@@ -64,7 +68,7 @@ func GenerateDummyData() {
 
 	book3 := Book{
 		BookName: "The Godfather",
-		Author : Author{
+		AuthorInfo : AuthorInfo{
 			Name: "Mario Puzo",
 			DateOfBirth : "October 15, 1920",
 			BirthPlace: "United States",
@@ -77,7 +81,7 @@ func GenerateDummyData() {
 
 	book4 := Book{
 		BookName: "The Kite Runner",
-		Author : Author{
+		AuthorInfo : AuthorInfo{
 			Name: "Khaled Hosseini",
 			DateOfBirth : "March 4, 1965",
 			BirthPlace: "Afganistan",
@@ -94,38 +98,57 @@ func initializeData()  {
 	authorList = make(AuthorDB)
 	GenerateDummyData()
 
-	for key,value := range bookList {
-		fmt.Println("Key",key, " -> " , "Value : " , value)
-	}
-
 }
 
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","application/json")
-	err := json.NewEncoder(w).Encode("Hello From Get All Books")
-	if(err != nil) {
+	err := json.NewEncoder(w).Encode(bookList)
+	if err != nil {
 		http.Error(w,err.Error(),400)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
-func GetBook(w http.ResponseWriter, r *http.Request) {
+func GetBookByName(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","application/json")
 	bookName := chi.URLParam(r,"bookName")
 
-	 arr := [3]string {
-		bookName,
-		bookName,
-		"Hello From Getbook",
+	for _,bookInfo := range bookList {
+		bookNameWOSpace := strings.ReplaceAll(bookInfo.BookName," ","")
+		if bookInfo.BookName == bookName || bookNameWOSpace == bookName {
+			err := json.NewEncoder(w).Encode(bookInfo)
+			if(err != nil) {
+				http.Error(w,err.Error(),400)
+				return
+			}
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 	}
 
-	err := json.NewEncoder(w).Encode(arr)
+	err := json.NewEncoder(w).Encode("Book not found. Check if spelling is correct")
 
-	if(err != nil) {
+	if err != nil {
 		http.Error(w,err.Error(),400)
 	}
 	w.WriteHeader(http.StatusOK)
 
+}
+func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type","application/json")
+
+	ISBN := chi.URLParam(r,"ISBN")
+
+	if _,ok := bookList[ISBN] ; ok == false {
+		w.WriteHeader(404)
+		return
+	}
+
+	err := json.NewEncoder(w).Encode(bookList[ISBN])
+	if err != nil {
+		http.Error(w,err.Error(),400)
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
@@ -146,7 +169,8 @@ func main() {
 
 	r.Route("/books",func(r chi.Router) {
 		r.Get("/",GetAllBooks)
-		r.Get("/{bookName}",GetBook)
+		r.Get("/Name/{bookName}", GetBookByName)
+		r.Get("/ISBN/{ISBN}",GetBookByISBN)
 	})
 
 
