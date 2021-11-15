@@ -41,6 +41,33 @@ type Book struct {
 	Publisher string `json:"publisher"`
 }
 
+/*
+{
+    "book_name" : "Harry Potter",
+    "author_info" : {
+        "name" : "JK Rowling",
+        "date_of_birth" : "31 July 1965",
+        "birth_place" : "England"
+    },
+    "ISBN" : "0-7475-3269-9",
+    "Genre" : "Fantasy",
+    "Publisher" : "Bloomsbury"
+}
+
+{
+    "book_name" : "The Sicilian",
+    "author_info" : {
+        "name" : "Mario Puzo",
+        "date_of_birth" : "October 15, 1920",
+        "birth_place" : "United States"
+    },
+    "ISBN" : "0-671-43564-7",
+    "Genre" : "Thriller",
+    "Publisher" : "	Random House"
+}
+
+ */
+
 func GenerateDummyData() {
 	book1 := Book{
 		BookName: "A Thousand Splendid Suns",
@@ -98,7 +125,7 @@ func GenerateDummyData() {
 func addAuthorToList(authorName string , authorObject *Author) {
 	authorNameWOSpace := strings.ReplaceAll(authorName," ","")
 
-	fmt.Println("Adding new obj" , authorName,authorNameWOSpace,authorObject.Books)
+	//fmt.Println("Adding new obj" , authorName,authorNameWOSpace,authorObject.Books)
 
 	authorList[authorName] = authorObject
 	authorList[authorNameWOSpace] = authorObject
@@ -106,7 +133,6 @@ func addAuthorToList(authorName string , authorObject *Author) {
 
 func addBookToAuthor(authorName string, bookName string) {
 	authorList[authorName].Books = append(authorList[authorName].Books, bookName)
-
 }
 
 func GenerateAuthorInfo() {
@@ -139,6 +165,7 @@ func initializeData()  {
 }
 
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
+	//fmt.Println("Call get all book")
 	w.Header().Set("Content-Type","application/json")
 	err := json.NewEncoder(w).Encode(bookList)
 	if err != nil {
@@ -147,6 +174,22 @@ func GetAllBooks(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func GetBooksNameSimplified(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type","application/json")
+	var booksName []string
+	for _,bookInfo := range bookList {
+		booksName = append(booksName,bookInfo.BookName)
+	}
+	err := json.NewEncoder(w).Encode(booksName)
+
+	if err != nil {
+		http.Error(w,err.Error(),400)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func GetBookByName(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","application/json")
 	bookName := chi.URLParam(r,"bookName")
@@ -173,6 +216,7 @@ func GetBookByName(w http.ResponseWriter, r *http.Request) {
 
 }
 func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
+
 	w.Header().Set("Content-Type","application/json")
 
 	ISBN := chi.URLParam(r,"ISBN")
@@ -185,6 +229,38 @@ func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(bookList[ISBN])
 	if err != nil {
 		http.Error(w,err.Error(),400)
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func AddBook(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("Called Add book method")
+
+	w.Header().Set("Content-Type","application/json")
+	var book Book
+	err := json.NewDecoder(r.Body).Decode(&book)
+
+	if err != nil {
+		fmt.Println("Cant decode")
+		http.Error(w,err.Error(),400)
+		return
+	}
+
+	if _,ok := bookList[book.ISBN]; ok == true {
+		return
+	}
+
+	bookList[book.ISBN] = book
+
+	authorName := book.AuthorInfo.Name
+
+	if _,ok := authorBookCount[authorName] ; ok == true {
+		authorBookCount[authorName]++
+		addBookToAuthor(authorName,book.BookName)
+	} else {
+		author := &Author{AuthorInfo :book.AuthorInfo ,Books: []string {book.BookName},}
+		addAuthorToList(authorName,author)
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -244,13 +320,17 @@ func main() {
 	r.Route("/books",func(r chi.Router) {
 		r.Get("/",GetAllBooks)
 		r.Get("/Name/{bookName}", GetBookByName)
+		r.Get("/simplified",GetBooksNameSimplified)
 		r.Get("/ISBN/{ISBN}",GetBookByISBN)
+		r.Post("/AddBook",AddBook)
 	})
 
 	r.Route("/authors",func(r chi.Router) {
 		r.Get("/",GetAllAuthors)
 		r.Get("/{AuthorName}",GetAuthorInfo)
 	})
+
+
 
 
 	http.ListenAndServe(":8081",r)
