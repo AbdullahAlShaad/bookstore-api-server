@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 )
 
 type BookDB map[string]Book
-type AuthorDB map[string]Author
+type AuthorDB map[string] *Author
 
 // Keeps record Books
 // key - ISBN, value -> Book Object
@@ -18,6 +19,7 @@ var bookList BookDB
 // Records Number of books of author
 // key -> author , value -> Number of books written by that author
 var authorList AuthorDB
+var authorBookCount map[string]int
 
 
 type AuthorInfo struct {
@@ -93,10 +95,46 @@ func GenerateDummyData() {
 	bookList["1-57322-245-3"] = book4
 }
 
+func addAuthorToList(authorName string , authorObject *Author) {
+	authorNameWOSpace := strings.ReplaceAll(authorName," ","")
+
+	fmt.Println("Adding new obj" , authorName,authorNameWOSpace,authorObject.Books)
+
+	authorList[authorName] = authorObject
+	authorList[authorNameWOSpace] = authorObject
+}
+
+func addBookToAuthor(authorName string, bookName string) {
+	authorList[authorName].Books = append(authorList[authorName].Books, bookName)
+
+}
+
+func GenerateAuthorInfo() {
+
+	for _,bookInfo := range bookList {
+
+		authorName := bookInfo.AuthorInfo.Name
+
+		if _,ok := authorBookCount[authorName] ; ok == false {
+			authorBookCount[authorName] = 1
+			authorObj := &Author{AuthorInfo : bookInfo.AuthorInfo,
+				Books : []string{bookInfo.BookName},}
+
+			addAuthorToList(authorName,authorObj)
+
+		} else {
+			authorBookCount[authorName]++
+			addBookToAuthor(authorName,bookInfo.BookName)
+		}
+	}
+}
+
 func initializeData()  {
 	bookList = make(BookDB)
 	authorList = make(AuthorDB)
+	authorBookCount = make(map[string]int)
 	GenerateDummyData()
+	GenerateAuthorInfo()
 
 }
 
@@ -117,7 +155,7 @@ func GetBookByName(w http.ResponseWriter, r *http.Request) {
 		bookNameWOSpace := strings.ReplaceAll(bookInfo.BookName," ","")
 		if bookInfo.BookName == bookName || bookNameWOSpace == bookName {
 			err := json.NewEncoder(w).Encode(bookInfo)
-			if(err != nil) {
+			if err != nil {
 				http.Error(w,err.Error(),400)
 				return
 			}
@@ -151,6 +189,42 @@ func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func GetAllAuthors(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type","application/json")
+
+	var authorNames []string
+	for authorName := range authorBookCount {
+		authorNames = append(authorNames,authorName)
+	}
+
+	err := json.NewEncoder(w).Encode(authorNames)
+
+	if err != nil {
+		http.Error(w,err.Error(),400)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func GetAuthorInfo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type","application/json")
+
+	authorName := chi.URLParam(r,"AuthorName")
+
+	if _,ok := authorList[authorName] ; ok == false {
+		w.WriteHeader(404)
+		return
+	}
+
+	err := json.NewEncoder(w).Encode( authorList[authorName])
+	if err != nil {
+		http.Error(w,err.Error(),400)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+
+}
+
 func main() {
 
 	initializeData()
@@ -171,6 +245,11 @@ func main() {
 		r.Get("/",GetAllBooks)
 		r.Get("/Name/{bookName}", GetBookByName)
 		r.Get("/ISBN/{ISBN}",GetBookByISBN)
+	})
+
+	r.Route("/authors",func(r chi.Router) {
+		r.Get("/",GetAllAuthors)
+		r.Get("/{AuthorName}",GetAuthorInfo)
 	})
 
 
