@@ -235,8 +235,6 @@ func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 
 func AddBook(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("Called Add book method")
-
 	w.Header().Set("Content-Type","application/json")
 	var book Book
 	err := json.NewDecoder(r.Body).Decode(&book)
@@ -263,6 +261,71 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 		addAuthorToList(authorName,author)
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func UpdateBook(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type","application/json")
+
+	ISBN := chi.URLParam(r,"ISBN")
+
+	if _,exist := bookList[ISBN] ; exist == false {
+		w.WriteHeader(404)
+		return
+	}
+
+	updatedBookInfo := bookList[ISBN]
+	err := json.NewDecoder(r.Body).Decode(&updatedBookInfo)
+
+	if err != nil {
+		fmt.Println("Cant decode")
+		http.Error(w,err.Error(),400)
+		return
+	}
+
+	if bookList[ISBN].AuthorInfo.Name != updatedBookInfo.AuthorInfo.Name || bookList[ISBN].BookName != updatedBookInfo.BookName || bookList[ISBN].ISBN != updatedBookInfo.ISBN || ISBN != updatedBookInfo.ISBN {
+		json.NewEncoder(w).Encode("Cant edit book name , author name or isbn. If there is mistake in these fields please delete the entry and try re adding")
+		w.WriteHeader(400)
+		return
+	}
+	bookList[ISBN] = updatedBookInfo
+	w.WriteHeader(http.StatusOK)
+
+}
+
+func removeFromSlice(s []string, index int) []string {
+	s[index] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
+func DeleteBook(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type","application/json")
+	ISBN := chi.URLParam(r,"ISBN")
+
+	if _,ok := bookList[ISBN] ; ok == false {
+		w.WriteHeader(400)
+		return
+	}
+
+	bookInfo := bookList[ISBN]
+
+	if cnt,_ := authorBookCount[bookInfo.AuthorInfo.Name] ; cnt == 1 {
+		delete(authorBookCount,bookInfo.AuthorInfo.Name)
+		delete(authorList,bookInfo.AuthorInfo.Name)
+	} else {
+		authorBookCount[bookInfo.AuthorInfo.Name]--
+		authorBooks := authorList[bookInfo.AuthorInfo.Name].Books
+
+		for i,bookName := range(authorBooks) {
+			if bookName == bookInfo.BookName {
+				authorList[bookInfo.AuthorInfo.Name].Books = removeFromSlice(authorBooks,i)
+				break
+			}
+		}
+
+	}
+	delete(bookList,ISBN)
+	w.WriteHeader(http.StatusOK)
+
 }
 
 func GetAllAuthors(w http.ResponseWriter, r *http.Request){
@@ -302,7 +365,6 @@ func GetAuthorInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-
 	initializeData()
 
 	r := chi.NewRouter()
@@ -320,9 +382,11 @@ func main() {
 	r.Route("/books",func(r chi.Router) {
 		r.Get("/",GetAllBooks)
 		r.Get("/Name/{bookName}", GetBookByName)
-		r.Get("/simplified",GetBooksNameSimplified)
+		r.Get("/simple",GetBooksNameSimplified)
 		r.Get("/ISBN/{ISBN}",GetBookByISBN)
-		r.Post("/AddBook",AddBook)
+		r.Post("/Add",AddBook)
+		r.Put("/Update/{ISBN}",UpdateBook)
+		r.Delete("/Delete/{ISBN}",DeleteBook)
 	})
 
 	r.Route("/authors",func(r chi.Router) {
