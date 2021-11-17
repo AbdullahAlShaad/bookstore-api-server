@@ -73,6 +73,7 @@ func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode(bookList[ISBN])
 	if err != nil {
 		http.Error(w,err.Error(),400)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
@@ -104,6 +105,13 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 		author := &Author{AuthorInfo :book.AuthorInfo ,Books: []string {book.BookName},}
 		addAuthorToList(authorName,author)
 	}
+
+	encodeErr := json.NewEncoder(w).Encode("Succesfully Added Book")
+	if encodeErr != nil {
+		http.Error(w,encodeErr.Error(),404)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -132,6 +140,12 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	bookList[ISBN] = updatedBookInfo
+
+	encodeErr := json.NewEncoder(w).Encode("Succesfully Updated")
+	if encodeErr != nil {
+		http.Error(w,encodeErr.Error(),404)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 
 }
@@ -168,6 +182,11 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 
 	}
 	delete(bookList,ISBN)
+	encodeErr := json.NewEncoder(w).Encode("Succesfully Deleted Book")
+	if encodeErr != nil {
+		http.Error(w,encodeErr.Error(),404)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 
 }

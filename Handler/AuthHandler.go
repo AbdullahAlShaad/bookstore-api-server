@@ -20,7 +20,7 @@ func initAuth() {
 	initDummyUser()
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","application/json")
 
 	var cred Credential
@@ -56,21 +56,64 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-
 	http.SetCookie(w,&http.Cookie{
 		Name : "jwt",
 		Value : tokenString,
 		Expires: expireTime,
 	})
+
+	encodeErr := json.NewEncoder(w).Encode("Succesfully Logged IN...")
+	if encodeErr != nil {
+		http.Error(w,encodeErr.Error(),404)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
-func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+func Logout(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type","application/json")
 	http.SetCookie(w,&http.Cookie{
 		Name : "jwt",
 		Expires: time.Now(),
 	})
+
+	encodeErr := json.NewEncoder(w).Encode("Succesfully Logged Out")
+	if encodeErr != nil {
+		http.Error(w,encodeErr.Error(),404)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
+
+func Register(w http.ResponseWriter, r *http.Request) {
+
+	var cred Credential
+	err := json.NewDecoder(r.Body).Decode(&cred)
+	if err != nil {
+		fmt.Println("Can't Decode")
+		http.Error(w,err.Error(),400)
+		return
+	}
+
+	if len(cred.Username) == 0 || len(cred.Password) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if _,ok := UserDB[cred.Username] ; ok == true {
+		fmt.Println("Can't Register. Username taken")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	UserDB[cred.Username] = cred.Password
+
+	encodeErr := json.NewEncoder(w).Encode("Registration Successful")
+	if encodeErr != nil {
+		http.Error(w,encodeErr.Error(),404)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+
+}

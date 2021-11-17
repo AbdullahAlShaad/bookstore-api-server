@@ -23,17 +23,18 @@ func main() {
 		w.Write([]byte("root."))
 	})
 
-	r.Post("/Login", Handler.LoginHandler)
-	r.Post("/Logout", Handler.LogoutHandler)
+	r.Post("/login", Handler.Login)
+	r.Post("/logout", Handler.Logout)
+	r.Post("/register",Handler.Register)
 
 	r.Group(func(r chi.Router) {
 
 		r.Route("/books",func(r chi.Router) {
 
 				r.Get("/",Handler.GetAllBooks)
-				r.Get("/Name/{bookName}", Handler.GetBookByName)
+				r.Get("/name/{bookName}", Handler.GetBookByName)
 				r.Get("/simple",Handler.GetBooksNameSimplified)
-				r.Get("/ISBN/{ISBN}", Handler.GetBookByISBN)
+				r.Get("/isbn/{ISBN}", Handler.GetBookByISBN)
 
 				r.Group(func(r chi.Router) {
 
