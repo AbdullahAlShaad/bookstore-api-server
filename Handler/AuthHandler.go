@@ -1,30 +1,23 @@
-package main
+package Handler
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/jwtauth/v5"
 	"net/http"
 	"time"
-
-	"github.com/go-chi/jwtauth/v5"
 )
-
-var tokenAuth *jwtauth.JWTAuth
-
-type Credential struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-// Key : UserID , Value : Password
-var UserDB map[string]string
 
 func initDummyUser() {
 	UserDB = make(map[string]string)
 	UserDB["User1"] = "Password1"
 	UserDB["User2"] = "Password2"
+}
 
-	tokenAuth = jwtauth.New("HS256", []byte("secret"), nil)
+func initAuth() {
+
+	TokenAuth = jwtauth.New("HS256", []byte("secret"), nil)
+	initDummyUser()
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +25,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var cred Credential
 	err := json.NewDecoder(r.Body).Decode(&cred)
-	if(err != nil) {
+	if err != nil {
 		fmt.Println("Can't Decode")
 		http.Error(w,err.Error(),400)
 		return
@@ -51,7 +44,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	expireTime := time.Now().Add(10 * time.Minute)
-	_,tokenString,err := tokenAuth.Encode(map[string]interface{}{
+	_,tokenString,err := TokenAuth.Encode(map[string]interface{}{
 		"aud": "Abdullah Al Shaad",
 		"exp": expireTime.Unix(),
 	})
@@ -78,6 +71,6 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		Name : "jwt",
 		Expires: time.Now(),
 	})
-
+	w.WriteHeader(http.StatusOK)
 }
 
