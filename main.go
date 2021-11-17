@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/jwtauth/v5"
 	"net/http"
 	"strings"
 )
@@ -161,6 +162,7 @@ func initializeData()  {
 	authorBookCount = make(map[string]int)
 	GenerateDummyData()
 	GenerateAuthorInfo()
+	initDummyUser()
 
 }
 
@@ -378,23 +380,32 @@ func main() {
 		w.Write([]byte("root."))
 	})
 
+	r.Post("/Login",LoginHandler)
+	r.Post("/Logout",LogoutHandler)
 
-	r.Route("/books",func(r chi.Router) {
-		r.Get("/",GetAllBooks)
-		r.Get("/Name/{bookName}", GetBookByName)
-		r.Get("/simple",GetBooksNameSimplified)
-		r.Get("/ISBN/{ISBN}",GetBookByISBN)
-		r.Post("/Add",AddBook)
-		r.Put("/Update/{ISBN}",UpdateBook)
-		r.Delete("/Delete/{ISBN}",DeleteBook)
+	r.Group(func(r chi.Router) {
+
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator)
+
+		r.Route("/books",func(r chi.Router) {
+
+			r.Get("/",GetAllBooks)
+			r.Get("/Name/{bookName}", GetBookByName)
+			r.Get("/simple",GetBooksNameSimplified)
+			r.Get("/ISBN/{ISBN}",GetBookByISBN)
+			r.Post("/Add",AddBook)
+			r.Put("/Update/{ISBN}",UpdateBook)
+			r.Delete("/Delete/{ISBN}",DeleteBook)
+		})
+
+		r.Route("/authors",func(r chi.Router) {
+			r.Get("/",GetAllAuthors)
+			r.Get("/{AuthorName}",GetAuthorInfo)
+		})
+
+
 	})
-
-	r.Route("/authors",func(r chi.Router) {
-		r.Get("/",GetAllAuthors)
-		r.Get("/{AuthorName}",GetAuthorInfo)
-	})
-
-
 
 
 	http.ListenAndServe(":8081",r)
