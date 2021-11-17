@@ -42,32 +42,7 @@ type Book struct {
 	Publisher string `json:"publisher"`
 }
 
-/*
-{
-    "book_name" : "Harry Potter",
-    "author_info" : {
-        "name" : "JK Rowling",
-        "date_of_birth" : "31 July 1965",
-        "birth_place" : "England"
-    },
-    "ISBN" : "0-7475-3269-9",
-    "Genre" : "Fantasy",
-    "Publisher" : "Bloomsbury"
-}
 
-{
-    "book_name" : "The Sicilian",
-    "author_info" : {
-        "name" : "Mario Puzo",
-        "date_of_birth" : "October 15, 1920",
-        "birth_place" : "United States"
-    },
-    "ISBN" : "0-671-43564-7",
-    "Genre" : "Thriller",
-    "Publisher" : "	Random House"
-}
-
- */
 
 func GenerateDummyData() {
 	book1 := Book{
@@ -385,28 +360,58 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 
-		r.Use(jwtauth.Verifier(tokenAuth))
-		r.Use(jwtauth.Authenticator)
-
 		r.Route("/books",func(r chi.Router) {
 
-			r.Get("/",GetAllBooks)
-			r.Get("/Name/{bookName}", GetBookByName)
-			r.Get("/simple",GetBooksNameSimplified)
-			r.Get("/ISBN/{ISBN}",GetBookByISBN)
-			r.Post("/Add",AddBook)
-			r.Put("/Update/{ISBN}",UpdateBook)
-			r.Delete("/Delete/{ISBN}",DeleteBook)
+				r.Get("/",GetAllBooks)
+				r.Get("/Name/{bookName}", GetBookByName)
+				r.Get("/simple",GetBooksNameSimplified)
+				r.Get("/ISBN/{ISBN}",GetBookByISBN)
+
+				r.Group(func(r chi.Router) {
+
+					r.Use(jwtauth.Verifier(tokenAuth))
+					r.Use(jwtauth.Authenticator)
+
+					r.Post("/",AddBook)
+					r.Put("/{ISBN}",UpdateBook)
+					r.Delete("/{ISBN}",DeleteBook)
+				})
+
 		})
 
 		r.Route("/authors",func(r chi.Router) {
 			r.Get("/",GetAllAuthors)
 			r.Get("/{AuthorName}",GetAuthorInfo)
 		})
-
-
 	})
 
 
 	http.ListenAndServe(":8081",r)
 }
+
+/*
+{
+    "book_name" : "Harry Potter",
+    "author_info" : {
+        "name" : "JK Rowling",
+        "date_of_birth" : "31 July 1965",
+        "birth_place" : "England"
+    },
+    "ISBN" : "0-7475-3269-9",
+    "Genre" : "Fantasy",
+    "Publisher" : "Bloomsbury"
+}
+
+{
+    "book_name" : "The Sicilian",
+    "author_info" : {
+        "name" : "Mario Puzo",
+        "date_of_birth" : "October 15, 1920",
+        "birth_place" : "United States"
+    },
+    "ISBN" : "0-671-43564-7",
+    "Genre" : "Thriller",
+    "Publisher" : "	Random House"
+}
+
+*/
