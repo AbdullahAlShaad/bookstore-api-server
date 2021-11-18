@@ -19,7 +19,7 @@ After changing the directory to project directory
 |GET|`http://localhost:8081/books/name{BookName}`||Return Details of the given book name|
 |GET|`http://localhost:8081/authors`||Return list of authors|
 |GET|`http://localhost:8081/authors/{AuthorName}`||Returns Details of the given author|
-|DELETE|`http://localhost:8081/books/{ISBN`||Delete the book entry matching ISBN|
+|DELETE|`http://localhost:8081/books/{ISBN}`||Delete the book entry matching ISBN|
 -----------------
 
 And UPDATE and ADD methods can be called in the url `http://localhost:8081/books` with a request body which contains the details of the books in following format. To update a book info the isbn of the book should be passed as URL parameter. 
