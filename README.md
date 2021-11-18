@@ -9,7 +9,7 @@ After changing the directory to project directory
 ## performing api tasks
 
 |method|url|body|actions|
-|---|---|---|
+|---|---|---|---|
 |POST|`http://localhost:8081/register`|{"username": "shaad","password":"1234"}| Register new user|
 |POST|`http://localhost:8081/login`|{"username": "shaad","password":"1234"} | Loggin In the user|
 |POST|`http://localhost:8080/logout`|Logging Out|
