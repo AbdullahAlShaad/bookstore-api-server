@@ -12,7 +12,7 @@ After changing the directory to project directory
 |---|---|---|---|
 |POST|`http://localhost:8081/register`|{"username": "shaad","password":"1234"}| Register new user|
 |POST|`http://localhost:8081/login`|{"username": "shaad","password":"1234"} | Loggin In the user|
-|POST|`http://localhost:8080/logout`|Logging Out|
+|POST|`http://localhost:8080/logout`||Logging Out|
 |GET|`http://localhost:8081/books`||Returns Details of all books|
 |GET|`http://localhost:8081/books/simple`||Return list of books name|
 |GET|`http://localhost:8081/books/isbn/{ISBN}`||Returns Details of the Book of the given ISBN|
