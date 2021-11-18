@@ -12,6 +12,7 @@ func initDummyUser() {
 	UserDB = make(map[string]string)
 	UserDB["User1"] = "Password1"
 	UserDB["User2"] = "Password2"
+	UserDB["user"] = "pass"
 }
 
 func initAuth() {

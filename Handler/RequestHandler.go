@@ -95,6 +95,12 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(book.BookName) == 0 || len(book.ISBN) == 0 || len(book.AuthorInfo.Name) == 0 {
+		fmt.Println("Cant add a book without name or isbn or author name")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	if _,ok := bookList[book.ISBN]; ok == true {
 		w.WriteHeader(http.StatusConflict)
 		return

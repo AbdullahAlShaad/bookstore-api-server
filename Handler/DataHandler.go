@@ -25,7 +25,7 @@ type Credential struct {
 }
 
 type AuthorInfo struct {
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 	DateOfBirth string `json:"date_of_birth"`
 	BirthPlace string `json:"birth_place"`
 }
@@ -36,9 +36,9 @@ type Author struct {
 }
 
 type Book struct {
-	BookName string `json:"book_name"`
+	BookName string `json:"book_name,omitempty"`
 	AuthorInfo `json:"author_info"`
-	ISBN string `json:"isbn"`
+	ISBN string `json:"isbn,omitempty"`
 	Genre string `json:"genre"`
 	Publisher string `json:"publisher"`
 }
