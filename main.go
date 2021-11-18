@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Shaad7/BookstoreAPIServer/Handler"
+	"github.com/Shaad7/BookstoreAPIServer/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
@@ -23,34 +23,34 @@ func main() {
 		w.Write([]byte("root."))
 	})
 
-	r.Post("/login", Handler.Login)
-	r.Post("/logout", Handler.Logout)
-	r.Post("/register",Handler.Register)
+	r.Post("/login", handler.Login)
+	r.Post("/logout", handler.Logout)
+	r.Post("/register", handler.Register)
 
 	r.Group(func(r chi.Router) {
 
 		r.Route("/books",func(r chi.Router) {
 
-				r.Get("/",Handler.GetAllBooks)
-				r.Get("/name/{bookName}", Handler.GetBookByName)
-				r.Get("/simple",Handler.GetBooksNameSimplified)
-				r.Get("/isbn/{ISBN}", Handler.GetBookByISBN)
+				r.Get("/", handler.GetAllBooks)
+				r.Get("/name/{bookName}", handler.GetBookByName)
+				r.Get("/simple", handler.GetBooksNameSimplified)
+				r.Get("/isbn/{ISBN}", handler.GetBookByISBN)
 
 				r.Group(func(r chi.Router) {
 
-					r.Use(jwtauth.Verifier(Handler.TokenAuth))
+					r.Use(jwtauth.Verifier(handler.TokenAuth))
 					r.Use(jwtauth.Authenticator)
 
-					r.Post("/",Handler.AddBook)
-					r.Put("/{ISBN}",Handler.UpdateBook)
-					r.Delete("/{ISBN}",Handler.DeleteBook)
+					r.Post("/", handler.AddBook)
+					r.Put("/{ISBN}", handler.UpdateBook)
+					r.Delete("/{ISBN}", handler.DeleteBook)
 				})
 
 		})
 
 		r.Route("/authors",func(r chi.Router) {
-			r.Get("/",Handler.GetAllAuthors)
-			r.Get("/{AuthorName}",Handler.GetAuthorInfo)
+			r.Get("/", handler.GetAllAuthors)
+			r.Get("/{AuthorName}", handler.GetAuthorInfo)
 		})
 	})
 

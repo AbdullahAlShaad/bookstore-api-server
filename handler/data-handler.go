@@ -1,4 +1,4 @@
-package Handler
+package handler
 
 import (
 	"github.com/go-chi/jwtauth/v5"

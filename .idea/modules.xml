@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/BookstoreAPIServer.iml" filepath="$PROJECT_DIR$/.idea/BookstoreAPIServer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../bookstore-api-server/.idea/bookstore-api-server.iml" filepath="$PROJECT_DIR$/../bookstore-api-server/.idea/bookstore-api-server.iml" />
     </modules>
   </component>
 </project>
