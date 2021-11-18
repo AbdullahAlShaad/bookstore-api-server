@@ -6,7 +6,7 @@ A simple api server which can be used as backend of a e-bookstore. User can get 
 After changing the directory to project directory
 `go run .`
 
-## performing api tasks
+## api calls
 
 |method|url|body|actions|
 |---|---|---|---|
