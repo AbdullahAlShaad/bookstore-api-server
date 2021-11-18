@@ -1,10 +1,11 @@
 package Handler
 
-import "net/http"
+import (
+	"net/http"
+)
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"strings"
 )
@@ -14,95 +15,62 @@ func setJSONHeader(w http.ResponseWriter) {
 }
 
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
-	//fmt.Println("Call get all book")
-	w.Header().Set("Content-Type","application/json")
-	err := json.NewEncoder(w).Encode(bookList)
-	if err != nil {
-		http.Error(w,err.Error(),400)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	WriteJSONResponse(w,http.StatusOK,bookList)
 }
 
 func GetBooksNameSimplified(w http.ResponseWriter, r *http.Request) {
-	setJSONHeader(w)
+
 	var booksName []string
 	for _,bookInfo := range bookList {
 		booksName = append(booksName,bookInfo.BookName)
 	}
-	err := json.NewEncoder(w).Encode(booksName)
-
-	if err != nil {
-		http.Error(w,err.Error(),400)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	WriteJSONResponse(w,http.StatusOK,booksName)
 }
 
 func GetBookByName(w http.ResponseWriter, r *http.Request) {
-	setJSONHeader(w)
+
 	bookName := chi.URLParam(r,"bookName")
 
 	for _,bookInfo := range bookList {
 		bookNameWOSpace := strings.ReplaceAll(bookInfo.BookName," ","")
 		if bookInfo.BookName == bookName || bookNameWOSpace == bookName {
-			err := json.NewEncoder(w).Encode(bookInfo)
-			if err != nil {
-				http.Error(w,err.Error(),400)
-				return
-			}
-			w.WriteHeader(http.StatusOK)
+
+			WriteJSONResponse(w,http.StatusOK,bookInfo)
 			return
 		}
 	}
 
-	err := json.NewEncoder(w).Encode("Book not found. Check if spelling is correct")
-
-	if err != nil {
-		http.Error(w,err.Error(),400)
-	}
-	w.WriteHeader(http.StatusOK)
-
+	WriteJSONResponse(w,http.StatusBadRequest,"Book not found. Check if spelling is correct")
 }
 func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 
-	setJSONHeader(w)
-
 	ISBN := chi.URLParam(r,"ISBN")
 
-	if _,ok := bookList[ISBN] ; ok == false {
-		w.WriteHeader(404)
+	book, ok := bookList[ISBN]
+	if !ok {
+		WriteJSONResponse(w,http.StatusNotFound,"Requested book doesn't exist")
 		return
 	}
-
-	err := json.NewEncoder(w).Encode(bookList[ISBN])
-	if err != nil {
-		http.Error(w,err.Error(),400)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	WriteJSONResponse(w,http.StatusOK,book)
 }
 
 func AddBook(w http.ResponseWriter, r *http.Request) {
 
-	setJSONHeader(w)
 	var book Book
 	err := json.NewDecoder(r.Body).Decode(&book)
 
 	if err != nil {
-		fmt.Println("Cant decode")
-		http.Error(w,err.Error(),400)
+		WriteJSONResponse(w,http.StatusBadRequest,"Can't Decode Given Data")
 		return
 	}
 
 	if len(book.BookName) == 0 || len(book.ISBN) == 0 || len(book.AuthorInfo.Name) == 0 {
-		fmt.Println("Cant add a book without name or isbn or author name")
-		w.WriteHeader(http.StatusBadRequest)
+		WriteJSONResponse(w,http.StatusBadRequest,"Name, ISBN and Author Name are required field to add a book")
 		return
 	}
 
 	if _,ok := bookList[book.ISBN]; ok == true {
-		w.WriteHeader(http.StatusConflict)
+		WriteJSONResponse(w,http.StatusConflict,"The book already exist")
 		return
 	}
 
@@ -117,23 +85,15 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 		author := &Author{AuthorInfo :book.AuthorInfo ,Books: []string {book.BookName},}
 		addAuthorToList(authorName,author)
 	}
-
-	encodeErr := json.NewEncoder(w).Encode("Succesfully Added Book")
-	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),404)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+	WriteJSONResponse(w,http.StatusOK,"Successfully Added Book")
 }
 
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
-	setJSONHeader(w)
 
 	ISBN := chi.URLParam(r,"ISBN")
 
-	if _,exist := bookList[ISBN] ; exist == false {
-		w.WriteHeader(404)
+	if _,ok := bookList[ISBN] ; !ok {
+		WriteJSONResponse(w,http.StatusConflict,"Wrong ISBN")
 		return
 	}
 
@@ -141,103 +101,88 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&updatedBookInfo)
 
 	if err != nil {
-		fmt.Println("Cant decode")
-		http.Error(w,err.Error(),400)
+		WriteJSONResponse(w,http.StatusBadRequest,"Can't Decode Given Data")
 		return
 	}
 
 	if bookList[ISBN].AuthorInfo.Name != updatedBookInfo.AuthorInfo.Name || bookList[ISBN].BookName != updatedBookInfo.BookName || bookList[ISBN].ISBN != updatedBookInfo.ISBN || ISBN != updatedBookInfo.ISBN {
-		json.NewEncoder(w).Encode("Cant edit book name , author name or isbn. If there is mistake in these fields please delete the entry and try re adding")
-
-		w.WriteHeader(400)
+		WriteJSONResponse(w,http.StatusBadRequest,"Cant edit book name , author name or isbn. If there is mistake in these fields please delete the entry and try re adding")
 		return
 	}
 	bookList[ISBN] = updatedBookInfo
 
-	encodeErr := json.NewEncoder(w).Encode("Succesfully Updated")
-	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),404)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-
+	WriteJSONResponse(w,http.StatusOK,"Successfully Updated Book")
 }
 
 func removeFromSlice(s []string, index int) []string {
+	//return append(s[:index], s[index+1:]...)
 	s[index] = s[len(s)-1]
 	return s[:len(s)-1]
 }
 
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
 
-	setJSONHeader(w)
 	ISBN := chi.URLParam(r,"ISBN")
 
 	if _,ok := bookList[ISBN] ; ok == false {
-		w.WriteHeader(400)
+		WriteJSONResponse(w,http.StatusBadRequest,"Wrong ISBN")
 		return
 	}
 
 	bookInfo := bookList[ISBN]
 
-	if cnt,_ := authorBookCount[bookInfo.AuthorInfo.Name] ; cnt == 1 {
+	if cnt := authorBookCount[bookInfo.AuthorInfo.Name] ; cnt == 1 {
 		delete(authorBookCount,bookInfo.AuthorInfo.Name)
 		delete(authorList,bookInfo.AuthorInfo.Name)
 	} else {
 		authorBookCount[bookInfo.AuthorInfo.Name]--
 		authorBooks := authorList[bookInfo.AuthorInfo.Name].Books
 
-		for i,bookName := range(authorBooks) {
+		for i,bookName := range authorBooks {
 			if bookName == bookInfo.BookName {
 				authorList[bookInfo.AuthorInfo.Name].Books = removeFromSlice(authorBooks,i)
 				break
 			}
 		}
-
 	}
 	delete(bookList,ISBN)
-	encodeErr := json.NewEncoder(w).Encode("Succesfully Deleted Book")
-	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),404)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
 
+	WriteJSONResponse(w,http.StatusOK,"Successfully Deleted Book")
 }
 
 func GetAllAuthors(w http.ResponseWriter, r *http.Request){
-
-	setJSONHeader(w)
 
 	var authorNames []string
 	for authorName := range authorBookCount {
 		authorNames = append(authorNames,authorName)
 	}
-
-	err := json.NewEncoder(w).Encode(authorNames)
-
-	if err != nil {
-		http.Error(w,err.Error(),400)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	WriteJSONResponse(w, http.StatusOK, authorNames)
 }
 
 func GetAuthorInfo(w http.ResponseWriter, r *http.Request) {
-	setJSONHeader(w)
-
 	authorName := chi.URLParam(r, "AuthorName")
 
-	if _, ok := authorList[authorName]; ok == false {
-		w.WriteHeader(404)
+	if _, ok := authorList[authorName]; !ok {
+		WriteJSONResponse(w,http.StatusNotFound,"Author Does Not Exist")
 		return
 	}
+	WriteJSONResponse(w,http.StatusOK,authorList[authorName])
+}
 
-	err := json.NewEncoder(w).Encode(authorList[authorName])
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
+func WriteJSONResponse(w http.ResponseWriter, code int, data interface{}) {
+
+	setJSONHeader(w)
+	w.WriteHeader(code)
+	switch x := data.(type) {
+	case string:
+		w.Write([]byte(x))
+	case []byte:
+		w.Write(x)
+	default:
+		err := json.NewEncoder(w).Encode(x)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
-	w.WriteHeader(http.StatusOK)
-
 }

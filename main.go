@@ -5,12 +5,12 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
+	"log"
 	"net/http"
 )
 
 
 func main() {
-	Handler.InitializeData()
 
 	r := chi.NewRouter()
 
@@ -55,7 +55,9 @@ func main() {
 	})
 
 
-	http.ListenAndServe(":8081",r)
+	if err := http.ListenAndServe(":8081",r); err != nil {
+		log.Fatalln(err)
+	}
 }
 
 /*

@@ -9,10 +9,11 @@ import (
 )
 
 func initDummyUser() {
-	UserDB = make(map[string]string)
-	UserDB["User1"] = "Password1"
-	UserDB["User2"] = "Password2"
-	UserDB["user"] = "pass"
+	UserDB = map[string]string {
+		"User1": "Password1",
+		"User2": "Password2",
+		"user": "pass",
+	}
 }
 
 func initAuth() {
@@ -22,25 +23,21 @@ func initAuth() {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	setJSONHeader(w)
 
 	var cred Credential
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
-		fmt.Println("Can't Decode")
-		http.Error(w,err.Error(),400)
+		WriteJSONResponse(w,http.StatusBadRequest,"Can't Decode Given Data")
 		return
 	}
 
 	if _,ok := UserDB[cred.Username] ; ok == false {
-		fmt.Println("User does not exist")
-		w.WriteHeader(http.StatusBadRequest)
+		WriteJSONResponse(w,http.StatusBadRequest,"Given User does not exist")
 		return
 	}
 
 	if pass,_ := UserDB[cred.Username] ; pass != cred.Password {
-		fmt.Println("Password does not match")
-		w.WriteHeader(http.StatusUnauthorized)
+		WriteJSONResponse(w,http.StatusUnauthorized,"Wrong Password")
 		return
 	}
 
@@ -53,7 +50,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(tokenString)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		WriteJSONResponse(w,http.StatusInternalServerError,"Can not Generate Auth Token")
 		return
 	}
 
@@ -63,60 +60,39 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Expires: expireTime,
 	})
 
-	encodeErr := json.NewEncoder(w).Encode("Succesfully Logged IN...")
-	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),404)
-		return
-	}
+	WriteJSONResponse(w,http.StatusOK,"Successfully Logged In... Welcome")
 
-	w.WriteHeader(http.StatusOK)
 }
 func Logout(w http.ResponseWriter, r *http.Request) {
 
-	setJSONHeader(w)
 	http.SetCookie(w,&http.Cookie{
-		Name : "jwt",
+		Name:    "jwt",
+		Value:   "",
 		Expires: time.Now(),
 	})
-
-	encodeErr := json.NewEncoder(w).Encode("Succesfully Logged Out")
-	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),http.StatusNotFound)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	WriteJSONResponse(w,http.StatusOK,"Successfully Logged Out... Good Bye")
 }
 
 
 func Register(w http.ResponseWriter, r *http.Request) {
 
-	setJSONHeader(w)
 	var cred Credential
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
-		fmt.Println("Can't Decode")
-		http.Error(w,err.Error(),http.StatusBadRequest)
+		WriteJSONResponse(w,http.StatusBadRequest,"Can't Decode Given Data")
 		return
 	}
 
 	if len(cred.Username) == 0 || len(cred.Password) == 0 {
-		w.WriteHeader(http.StatusBadRequest)
+		WriteJSONResponse(w,http.StatusBadRequest,"Username and Password can not be empty")
 		return
 	}
 
 	if _,ok := UserDB[cred.Username] ; ok == true {
-		fmt.Println("Can't Register. Username taken")
-		w.WriteHeader(http.StatusConflict)
+		WriteJSONResponse(w,http.StatusConflict,"Can't Register. Username Taken")
 		return
 	}
 
 	UserDB[cred.Username] = cred.Password
-
-	encodeErr := json.NewEncoder(w).Encode("Registration Successful")
-	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),404)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-
+	WriteJSONResponse(w,http.StatusOK,"Registration Successful. Login to continue")
 }

@@ -132,14 +132,11 @@ func GenerateAuthorInfo() {
 // Key : UserID , Value : Password
 var UserDB map[string]string
 
-
-
-func InitializeData()  {
+func init() {
 	bookList = make(BookDB)
 	authorList = make(AuthorDB)
 	authorBookCount = make(map[string]int)
 	GenerateDummyData()
 	GenerateAuthorInfo()
 	initAuth()
-
 }
