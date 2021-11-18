@@ -8,6 +8,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"strings"
 )
+
+func setJSONHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+}
+
 func GetAllBooks(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println("Call get all book")
 	w.Header().Set("Content-Type","application/json")
@@ -20,7 +25,7 @@ func GetAllBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetBooksNameSimplified(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","application/json")
+	setJSONHeader(w)
 	var booksName []string
 	for _,bookInfo := range bookList {
 		booksName = append(booksName,bookInfo.BookName)
@@ -35,7 +40,7 @@ func GetBooksNameSimplified(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetBookByName(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","application/json")
+	setJSONHeader(w)
 	bookName := chi.URLParam(r,"bookName")
 
 	for _,bookInfo := range bookList {
@@ -61,7 +66,7 @@ func GetBookByName(w http.ResponseWriter, r *http.Request) {
 }
 func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type","application/json")
+	setJSONHeader(w)
 
 	ISBN := chi.URLParam(r,"ISBN")
 
@@ -80,7 +85,7 @@ func GetBookByISBN(w http.ResponseWriter, r *http.Request) {
 
 func AddBook(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type","application/json")
+	setJSONHeader(w)
 	var book Book
 	err := json.NewDecoder(r.Body).Decode(&book)
 
@@ -91,6 +96,7 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _,ok := bookList[book.ISBN]; ok == true {
+		w.WriteHeader(http.StatusConflict)
 		return
 	}
 
@@ -116,7 +122,7 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","application/json")
+	setJSONHeader(w)
 
 	ISBN := chi.URLParam(r,"ISBN")
 
@@ -136,6 +142,7 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 
 	if bookList[ISBN].AuthorInfo.Name != updatedBookInfo.AuthorInfo.Name || bookList[ISBN].BookName != updatedBookInfo.BookName || bookList[ISBN].ISBN != updatedBookInfo.ISBN || ISBN != updatedBookInfo.ISBN {
 		json.NewEncoder(w).Encode("Cant edit book name , author name or isbn. If there is mistake in these fields please delete the entry and try re adding")
+
 		w.WriteHeader(400)
 		return
 	}
@@ -156,7 +163,8 @@ func removeFromSlice(s []string, index int) []string {
 }
 
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","application/json")
+
+	setJSONHeader(w)
 	ISBN := chi.URLParam(r,"ISBN")
 
 	if _,ok := bookList[ISBN] ; ok == false {
@@ -192,7 +200,8 @@ func DeleteBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllAuthors(w http.ResponseWriter, r *http.Request){
-	w.Header().Set("Content-Type","application/json")
+
+	setJSONHeader(w)
 
 	var authorNames []string
 	for authorName := range authorBookCount {
@@ -209,7 +218,7 @@ func GetAllAuthors(w http.ResponseWriter, r *http.Request){
 }
 
 func GetAuthorInfo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	setJSONHeader(w)
 
 	authorName := chi.URLParam(r, "AuthorName")
 

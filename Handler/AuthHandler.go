@@ -21,7 +21,7 @@ func initAuth() {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","application/json")
+	setJSONHeader(w)
 
 	var cred Credential
 	err := json.NewDecoder(r.Body).Decode(&cred)
@@ -71,7 +71,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 func Logout(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type","application/json")
+
+	setJSONHeader(w)
 	http.SetCookie(w,&http.Cookie{
 		Name : "jwt",
 		Expires: time.Now(),
@@ -79,7 +80,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	encodeErr := json.NewEncoder(w).Encode("Succesfully Logged Out")
 	if encodeErr != nil {
-		http.Error(w,encodeErr.Error(),404)
+		http.Error(w,encodeErr.Error(),http.StatusNotFound)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -88,11 +89,12 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 func Register(w http.ResponseWriter, r *http.Request) {
 
+	setJSONHeader(w)
 	var cred Credential
 	err := json.NewDecoder(r.Body).Decode(&cred)
 	if err != nil {
 		fmt.Println("Can't Decode")
-		http.Error(w,err.Error(),400)
+		http.Error(w,err.Error(),http.StatusBadRequest)
 		return
 	}
 
@@ -103,7 +105,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	if _,ok := UserDB[cred.Username] ; ok == true {
 		fmt.Println("Can't Register. Username taken")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusConflict)
 		return
 	}
 
