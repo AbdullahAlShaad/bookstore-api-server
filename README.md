@@ -2,6 +2,28 @@
 
 A simple api server which can be used as backend of a e-bookstore. User can get list of books and authors. Details of a book can be found using GET method by passing book name or ISBN as parameter. Details about authors can be found using GET method by passing author name as parameter. After registration and login, User can Add/Update and Delete books from the server
 
+# Installation
+To install Go, run the following command:
+```
+$ go_version=1.17.1
+$ cd ~/Downloads
+$ sudo apt-get update
+$ sudo apt-get install -y build-essential git curl wget
+$ wget https://dl.google.com/go/go${go_version}.linux-amd64.tar.gz
+$ sudo tar -C /usr/local -xzf go${go_version}.linux-amd64.tar.gz
+$ sudo chown -R $(id -u):$(id -g) /usr/local/go
+$ rm go${go_version}.linux-amd64.tar.gz
+```
+Add go to your $PATH variable
+```
+$ mkdir $HOME/go
+$ nano ~/.bashrc
+export GOPATH=$HOME/go
+export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
+$ source ~/.bashrc
+$ go version
+```
+
 ## Running the server
 After changing the directory to project directory
 `go run .`
