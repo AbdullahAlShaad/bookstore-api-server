@@ -24,11 +24,12 @@ $ source ~/.bashrc
 $ go version
 ```
 
-## Running the server
+## Running the Server
 After changing the directory to project directory
 `go run .`
 
-## api calls
+
+## API Calls
 
 |method|url|body|actions|
 |---|---|---|---|
