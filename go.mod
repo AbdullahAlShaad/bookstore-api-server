@@ -1,4 +1,4 @@
-module github.com/Shaad7/BookstoreAPIServer
+module github.com/Shaad7/bookstore-api-server
 
 go 1.17
 
