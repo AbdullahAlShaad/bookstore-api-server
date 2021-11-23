@@ -1,1 +1,5 @@
-.idea/
+.idea/.name
+.idea/modules.xml
+.idea/vcs.xml
+.idea/.gitignore
+.idea/bookstore-api-server.iml
