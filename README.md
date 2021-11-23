@@ -4,7 +4,7 @@ A simple api server which can be used as backend of a e-bookstore. User can get 
 
 # Installation
 To install Go, run the following command:
-```
+```shell
 $ go_version=1.17.1
 $ cd ~/Downloads
 $ sudo apt-get update
@@ -15,7 +15,7 @@ $ sudo chown -R $(id -u):$(id -g) /usr/local/go
 $ rm go${go_version}.linux-amd64.tar.gz
 ```
 Add go to your $PATH variable
-```
+```shell
 $ mkdir $HOME/go
 $ nano ~/.bashrc
 export GOPATH=$HOME/go
@@ -33,7 +33,7 @@ After changing the directory to project directory
 
 |method|url|body|actions|
 |---|---|---|---|
-|POST|`http://localhost:8081/register`|{```"username": "shaad","password":"1234"}```| Register new user|
+|POST|`http://localhost:8081/register`|{```{ "username": "shaad","password":"1234"}```| Register new user|
 |POST|`http://localhost:8081/login`|{```"username": "shaad","password":"1234"}```| Loggin In the user|
 |POST|`http://localhost:8080/logout`||Logging Out|
 |GET|`http://localhost:8081/books`||Returns Details of all books|
@@ -48,7 +48,7 @@ After changing the directory to project directory
 -----------------
 
 Request Body for POST and PUT methods to add and update book information. To update book information we must pass book_name, authorname and isbn correctly and only fill other fields which needs to be updated
-```
+```json
 {
     "book_name" : "The Sicilian",
     "author_info" : {
