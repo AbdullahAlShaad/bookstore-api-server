@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Base Image
-FROM golang:1.16-buster AS build  
+FROM golang:1.17-alpine AS build  
 
 # Default destination for all subsequent command
 # Directory inside the image
@@ -23,7 +23,7 @@ RUN go build -o /bookstore-api-server-docker .
 ##
 ## Deploy
 ##
-FROM gcr.io/distroless/base-debian10
+FROM alpine:latest
 
 WORKDIR /
 
@@ -31,8 +31,9 @@ COPY --from=build /bookstore-api-server-docker /bookstore-api-server-docker
 
 EXPOSE 8081
 
-USER nonroot:nonroot
 
 CMD ["/bookstore-api-server-docker"]
 
+
+# apk add bash
 
